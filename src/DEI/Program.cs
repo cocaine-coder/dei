@@ -5,14 +5,13 @@ var configuration = new ConfigurationBuilder()
 .AddJsonFile("appsettings.json").Build();
 
 var appInstallConfiguration = configuration.GetSection("App").Get<AppInstallConfiguration>()!;
-var cacheConfiguration = configuration.GetSection("Cache").Get<CacheConfiguration>()!;
 
 // 检查路径
 appInstallConfiguration.Path.ThrowIfPathNotExist();
-cacheConfiguration.Path.ThrowIfPathNotExist();
 
 using var cts = new CancellationTokenSource();
 
+// app 处理
 foreach (var item in appInstallConfiguration.Items)
 {
     if (item.Type == "zip")
@@ -23,7 +22,7 @@ foreach (var item in appInstallConfiguration.Items)
         // 下载并解压到目录
         await item.Url.DownloadZipFileAndExtractToDirectoryAsync(destPath, cts.Token);
 
-        // 添加环境变量
+        // 添加环境变量Path
         foreach (var env_path in item.EnvPaths)
         {
             Path.Combine(destPath, env_path).RegisterEnvPath();
@@ -39,11 +38,6 @@ foreach (var item in appInstallConfiguration.Items)
 public record AppInstallConfiguration(string Path, AppInstallItem[] Items);
 
 public record AppInstallItem(string Name, string Url, string Type, string[] EnvPaths);
-
-
-public record CacheConfiguration(string Path, AppInstallItem[] Items);
-
-public record CacheItem(string Name);
 
 
 public static class Extensions
